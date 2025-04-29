@@ -2,7 +2,8 @@
     "css.lint.unknownAtRules": "ignore",
     "scss.lint.unknownAtRules": "ignore",
     "conventionalCommits.scopes": [
-      "redux"
+      "redux",
+      "ui",
     ]
   }
   
