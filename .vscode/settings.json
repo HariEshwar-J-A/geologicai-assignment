@@ -4,6 +4,7 @@
     "conventionalCommits.scopes": [
       "redux",
       "ui",
+      "reusable"
     ]
   }
   
