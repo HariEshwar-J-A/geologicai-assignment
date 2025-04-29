@@ -1,0 +1,45 @@
+@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+
+  color-scheme: light dark;
+  color: rgba(255, 255, 255, 0.87);
+  background-color: #242424;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+:root {
+  --bg: #ffffff;
+  --fg: #1a202c;
+  --panel-bg: #f7fafc;
+  --panel-fg: #1a202c;
+  --hover-bg: #e2e8f0;
+  --selected-bg: #bee3f8;
+  --selected-fg: #1a202c;
+  --even-row-bg: #e3e3e3;
+}
+
+.dark {
+  --bg: #1a202c;
+  --fg: #edf2f7;
+  --panel-bg: #2d3748;
+  --panel-fg: #edf2f7;
+  --hover-bg: #4a5568;
+  --selected-bg: #2b6cb0;
+  --selected-fg: #edf2f7;
+  --even-row-bg: #353539;
+}
+
+button {
+  cursor: pointer;
+}
