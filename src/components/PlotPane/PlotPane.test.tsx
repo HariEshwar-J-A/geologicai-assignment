@@ -1,6 +1,6 @@
 import React from 'react';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { render, screen, fireEvent, within } from '@testing-library/react';
+import { render, screen, fireEvent, within, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Provider } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
@@ -43,6 +43,14 @@ vi.mock('react-plotly.js/factory', async () => {
 // Spy on Plotly.Plots.resize
 import Plotly from 'plotly.js-dist-min';
 vi.spyOn(Plotly.Plots, 'resize');
+
+vi.mock('../PlotlyLazy/helper', () => {
+  // Pull in the same Plotly you’re using in prod
+  const Plotly = import('plotly.js-dist-min');
+  return {
+    importPlotlyLib: () => Promise.resolve(Plotly),
+  };
+});
 
 // Helper to create a full Earthquake object
 function makeEQ(id: string, mag: number, latitude: number, longitude: number): Earthquake {
@@ -135,11 +143,23 @@ describe('PlotPane', () => {
     expect(within(ySelect).getByRole('option', { name: /Latitude/, hidden: true })).toBeDisabled();
   });
 
-  it('calls Plotly.Plots.resize on split:end', () => {
+  it('calls Plotly.Plots.resize on split:end', async () => {
     renderWith({ items: sampleItems });
-    expect(Plotly.Plots.resize).not.toHaveBeenCalled();
+
+    // grab the same PlotlyLib the component uses
+    const { importPlotlyLib } = await import('../PlotlyLazy/helper');
+    const PlotlyLib = await importPlotlyLib();
+
+    // spy on its resize method
+    const spy = vi.spyOn(PlotlyLib.Plots, 'resize');
+
+    expect(spy).not.toHaveBeenCalled();
     window.dispatchEvent(new Event('split:end'));
-    expect(Plotly.Plots.resize).toHaveBeenCalledTimes(1);
+
+    // waitFor in case the effect hasn’t run synchronously
+    await waitFor(() => {
+      expect(spy).toHaveBeenCalledTimes(1);
+    });
   });
 
   it('filters data by minMagnitude', () => {
