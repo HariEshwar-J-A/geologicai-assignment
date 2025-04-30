@@ -18,9 +18,7 @@ export default function SplitPane({
   initialPercent = 50,
   minSizePx = 100,
 }: SplitPaneProps) {
-  // declare dispatch with let at top to remove dependency
   dispatch = useAppDispatch();
-
   const storedWidth = useAppSelector((s) => s.split.widthPx);
   const containerRef = useRef<HTMLDivElement>(null);
   const gutterWidth = 8;
@@ -28,21 +26,19 @@ export default function SplitPane({
   const [widthPx, setWidthPx] = useState<number>(storedWidth || 0);
   const [dragging, setDragging] = useState(false);
 
-  // initialize split width once
+  // initialize width once
   useEffect(() => {
     if (widthPx > 0) return;
-    const container = containerRef.current;
-    if (!container) return;
-    const totalW = container.getBoundingClientRect().width;
+    const totalW = containerRef.current?.getBoundingClientRect().width ?? 0;
     const initial = Math.round((initialPercent / 100) * totalW);
     const clamped = Math.max(minSizePx, Math.min(initial, totalW - minSizePx - gutterWidth));
     setWidthPx(clamped);
     dispatch(setSplitWidth(clamped));
   }, [widthPx, initialPercent, minSizePx]);
 
-  // handle dragging
+  // handle pointer‐move & pointer‐up globally
   useEffect(() => {
-    function onMouseMove(e: MouseEvent) {
+    function onPointerMove(e: PointerEvent) {
       if (!dragging || !containerRef.current) return;
       const { left, width } = containerRef.current.getBoundingClientRect();
       let x = e.clientX - left;
@@ -53,18 +49,18 @@ export default function SplitPane({
       dispatch(setSplitWidth(x));
       window.dispatchEvent(new Event('resize'));
     }
-    function onMouseUp() {
-      if (dragging) {
-        setDragging(false);
-        window.dispatchEvent(new Event('resize'));
-        window.dispatchEvent(new Event('split:end'));
-      }
+    function onPointerUp() {
+      if (!dragging) return;
+      setDragging(false);
+      window.dispatchEvent(new Event('resize'));
+      window.dispatchEvent(new Event('split:end'));
     }
-    window.addEventListener('mousemove', onMouseMove);
-    window.addEventListener('mouseup', onMouseUp);
+
+    window.addEventListener('pointermove', onPointerMove);
+    window.addEventListener('pointerup', onPointerUp);
     return () => {
-      window.removeEventListener('mousemove', onMouseMove);
-      window.removeEventListener('mouseup', onMouseUp);
+      window.removeEventListener('pointermove', onPointerMove);
+      window.removeEventListener('pointerup', onPointerUp);
     };
   }, [dragging, minSizePx]);
 
@@ -75,7 +71,7 @@ export default function SplitPane({
         display: 'flex',
         height: '100%',
         width: '100%',
-        maxWidth: 'calc(100vw - 32px)', // full width minus 16px margin each side
+        maxWidth: 'calc(100vw - 32px)',
         margin: '0 auto',
       }}
     >
@@ -89,6 +85,8 @@ export default function SplitPane({
       >
         {pane1}
       </div>
+
+      {/* gutter: start drag on any pointing device */}
       <div
         style={{
           width: `${gutterWidth}px`,
@@ -96,8 +94,12 @@ export default function SplitPane({
           backgroundColor: '#64748b',
           flexShrink: 0,
         }}
-        onMouseDown={() => setDragging(true)}
+        onPointerDown={(e) => {
+          e.preventDefault(); // prevent accidental text‐selection
+          setDragging(true);
+        }}
       />
+
       <div
         style={{
           flex: 1,
