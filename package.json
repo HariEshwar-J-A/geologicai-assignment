@@ -3,6 +3,11 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "author": {
+    "name": "Harieshwar Jagan Abirami",
+    "email": "jaganabh@mcmaster.ca",
+    "url": "https://www.harieshwar.dev"
+  },
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
