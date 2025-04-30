@@ -1,10 +1,13 @@
-import { useState, useMemo, useEffect, useRef } from 'react';
-import Plotly, { PlotMouseEvent, Data as PlotData } from 'plotly.js-dist-min';
-import createPlotlyComponent from 'react-plotly.js/factory';
+import { useState, useMemo, useEffect, useRef, Suspense } from 'react';
+import { PlotMouseEvent, Data as PlotData } from 'plotly.js-dist-min';
 import { useAppSelector, useAppDispatch } from '../../hooks';
 import { setSelectedId } from '../../features/ui/selectionSlice';
+import Spinner from '../../reusables/Spinner/Spinner';
 
-const Plot = createPlotlyComponent(Plotly);
+// dynamically load Plot component due to heavy weight of Plotly library
+import Plot from '../PlotlyLazy/PlotlyLazy';
+import { importPlotlyLib } from '../PlotlyLazy/helper';
+
 type AxisKey = 'mag' | 'latitude' | 'longitude';
 
 export default function PlotPane() {
@@ -37,8 +40,13 @@ export default function PlotPane() {
   const plotRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    let Plotly: typeof import('plotly.js-dist-min');
+    importPlotlyLib().then((lib) => {
+      Plotly = lib;
+    });
+
     const handleSplitEnd = () => {
-      if (plotRef.current) Plotly.Plots.resize(plotRef.current);
+      if (plotRef.current && Plotly) Plotly.Plots.resize(plotRef.current);
     };
     window.addEventListener('split:end', handleSplitEnd);
     return () => window.removeEventListener('split:end', handleSplitEnd);
@@ -98,17 +106,19 @@ export default function PlotPane() {
         })}
       </div>
       <div className="flex-1 overflow-hidden">
-        <Plot
-          data={[trace]}
-          layout={layout}
-          onInitialized={(_fig, div) => (plotRef.current = div as HTMLDivElement)}
-          onClick={(e: PlotMouseEvent) => {
-            const pt = e.points?.[0];
-            if (pt?.customdata) dispatch(setSelectedId(pt.customdata as string));
-          }}
-          useResizeHandler
-          style={{ width: '100%', height: '100%' }}
-        />
+        <Suspense fallback={<Spinner />}>
+          <Plot
+            data={[trace]}
+            layout={layout}
+            onInitialized={(_fig, div) => (plotRef.current = div as HTMLDivElement)}
+            onClick={(e: PlotMouseEvent) => {
+              const pt = e.points?.[0];
+              if (pt?.customdata) dispatch(setSelectedId(pt.customdata as string));
+            }}
+            useResizeHandler
+            style={{ width: '100%', height: '100%' }}
+          />
+        </Suspense>
       </div>
     </div>
   );
