@@ -38,7 +38,10 @@ export default function SplitPane({
 
   // handle pointer‐move & pointer‐up globally
   useEffect(() => {
-    function onPointerMove(e: PointerEvent) {
+    const moveEvt = 'onpointermove' in window ? 'pointermove' : 'mousemove';
+    const upEvt = 'onpointerup' in window ? 'pointerup' : 'mouseup';
+
+    function onMove(e: PointerEvent | MouseEvent) {
       if (!dragging || !containerRef.current) return;
       const { left, width } = containerRef.current.getBoundingClientRect();
       let x = e.clientX - left;
@@ -49,18 +52,18 @@ export default function SplitPane({
       dispatch(setSplitWidth(x));
       window.dispatchEvent(new Event('resize'));
     }
-    function onPointerUp() {
+    function onUp() {
       if (!dragging) return;
       setDragging(false);
       window.dispatchEvent(new Event('resize'));
       window.dispatchEvent(new Event('split:end'));
     }
 
-    window.addEventListener('pointermove', onPointerMove);
-    window.addEventListener('pointerup', onPointerUp);
+    window.addEventListener(moveEvt, onMove);
+    window.addEventListener(upEvt, onUp);
     return () => {
-      window.removeEventListener('pointermove', onPointerMove);
-      window.removeEventListener('pointerup', onPointerUp);
+      window.removeEventListener(moveEvt, onMove);
+      window.removeEventListener(upEvt, onUp);
     };
   }, [dragging, minSizePx]);
 
@@ -98,6 +101,7 @@ export default function SplitPane({
           e.preventDefault(); // prevent accidental text‐selection
           setDragging(true);
         }}
+        onMouseDown={() => setDragging(true)}
       />
 
       <div
