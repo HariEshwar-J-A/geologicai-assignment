@@ -88,7 +88,7 @@ export default function PlotPane() {
                 className="mt-1 w-full bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded p-2 text-gray-900 dark:text-gray-100"
               >
                 {options.map((opt) => (
-                  <option key={opt} value={opt} disabled={idx === 1 && opt === xKey}>
+                  <option key={opt} value={opt} disabled={opt === (idx === 0 ? yKey : xKey)}>
                     {opt === 'mag' ? 'Magnitude' : opt.charAt(0).toUpperCase() + opt.slice(1)}
                   </option>
                 ))}

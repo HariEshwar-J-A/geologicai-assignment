@@ -1,6 +1,6 @@
 import React from 'react';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { render, screen, fireEvent, within, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Provider } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
@@ -154,21 +154,20 @@ describe('PlotPane', () => {
     expect(store.getState().selection.selectedId).toBe('a');
   });
 
-  it('auto-adjusts duplicate axes correctly', async () => {
-    const user = userEvent.setup();
+  it('prevents selecting the same value in both dropdowns by disabling the duplicate option', () => {
     renderWith({ items: sampleItems });
     const xSelect = screen.getByLabelText(/x-axis/i);
     const ySelect = screen.getByLabelText(/y-axis/i);
 
-    // set Y to latitude
-    await user.selectOptions(ySelect, 'latitude');
-    expect(ySelect).toHaveValue('latitude');
+    // pick “Magnitude” on the Y axis
+    userEvent.selectOptions(ySelect, 'mag');
+    expect(ySelect).toHaveValue('mag');
 
-    // set X to latitude ⇒ triggers effect to change Y
-    await user.selectOptions(xSelect, 'latitude');
-    // wait for useEffect to fire & correct Y
-    await waitFor(() => {
-      expect(ySelect).not.toHaveValue('latitude');
-    });
+    // now “Magnitude” must be disabled in the X axis dropdown
+    expect(within(xSelect).getByRole('option', { name: /Magnitude/, hidden: true })).toBeDisabled();
+
+    // likewise, switching X should disable that value in Y:
+    userEvent.selectOptions(xSelect, 'longitude');
+    expect(within(ySelect).getByRole('option', { name: /Longitude/, hidden: true })).toBeDisabled();
   });
 });
